@@ -20,6 +20,7 @@
 
 from pynput.keyboard import Controller as KeyboardController
 from pynput.mouse import Listener as MouseListener
+from pynput.mouse import Controller as MouseController
 from pynput import keyboard as Keyboard
 import time
 import pyscreenshot as ImageGrab
@@ -32,11 +33,23 @@ import cv2
 import pytesseract
 
 keyboard = KeyboardController()
+mouse = MouseController()
 
 delay = 0.01
 iterations_count = 0
 char_count = 0
 debug_mode = False
+
+# Weird variables
+a = 0
+
+# Default coords for laptops (1920x1080)
+x1 = 450
+# y1 = 716
+y1 = 616
+x2 = 1449
+# y2 = 889
+y2 = 789
 
 # Command line argument options
 description = "A bot that automates inputs for typeracer.com"
@@ -48,39 +61,38 @@ def typer(string):
 
 	for c in string:
 		char_count = char_count + len(c)
-		for ch in c:
+		if (not "change display format" in c.lower()):
+			for ch in c:
 
-			if ch == '|' or ch == '||':
-				keyboard.press("I")
-				keyboard.release("I")
+				if ch == '|':
+					keyboard.press("I")
+					keyboard.release("I")
 
-			elif ch == "\n":
-				keyboard.press(" ")
-				keyboard.release(" ")
+				elif ch == "[":
+					pass
 
-			elif ch != "|":
-				keyboard.type(ch)
-			
-			try:
-				time.sleep(delay)
-			except KeyboardInterrupt:
-				print("keyboard interrupt detected")
-				stats()
-				exit(0)
+				elif ch == "\n":
+					keyboard.press(" ")
+					keyboard.release(" ")
+
+				elif ch != "|":
+					keyboard.type(ch)
+				
+				try:
+					time.sleep(delay)
+				except KeyboardInterrupt:
+					print("keyboard interrupt detected")
+					stats()
+					exit(0)
 
 
 
 # Gets the cropped screenshot of the place
 def screenshawn():
 
-	x1 = 450
-	y1 = 716
-	x2 = 1449
-	y2 = 889
 
 	# part of the screen
 	im=ImageGrab.grab(bbox=(x1, y1, x2, y2))
-	# im.show()
 
 	# Saving cropped image to file
 	im.save('sample.png')
@@ -145,16 +157,35 @@ def on_press(key):
 
 
 
-def fetch_coords(x, y, button, pressed):
-	coords = mouse.position
-	print(x, y)
+def fetch_coords(key):
+	global a, x1, x2, y1, y1
+
+	if key == Keyboard.Key.ctrl_r:
+		coords = mouse.position
+		print(f"x: {coords[0]}; y: {coords[1]}")
+		print(coords)
+		a += 1
+		if a == 1:
+			x1 = coords[0]
+			y1 = coords[1]
+		if a == 2:
+			x2 = coords[0]
+			y2 = coords[1]
+			return False
 
 def callibrate():
-	with MouseListener(on_click=fetch_coords) as listener:
+	# with MouseListener(on_click=fetch_coords) as listener:
+	# 	try:
+	# 		listener.join()
+	# 	except KeyboardInterrupt:
+	# 		listener.stop()
+
+	with Keyboard.Listener(on_click=fetch_coords) as listener:
 		try:
 			listener.join()
 		except KeyboardInterrupt:
 			listener.stop()
+			exit(0)
 
 
 def stats():
@@ -181,24 +212,33 @@ if __name__ == "__main__":
 	parser = argparse.ArgumentParser(description = description)
 	parser.add_argument('-d', '--delay', help = "Changes the delay per character (default = 0.01)")
 	parser.add_argument('-s', '--setdebug', help = "Toggles debug mode, outputs the cropped image and converted code to file (default False)")
+	parser.add_argument('-c', '--callibrate', help = "Callibrates screenshot coordinates")
 	args = parser.parse_args()
 
 	if args.delay:
 		try:
 			delay = float(args.delay)
-			print(f"Delay has been set to {args.delay}")
 		except ValueError:
 			print(f"Delay value '{args.delay}' is invalid, please enter a number")
 			exit(0)
+
 	if args.setdebug:
-		#debug_mode = True if args.setdebug.lower() == "true" else False
 		debug_mode = debug_setter(args.setdebug)
 		if debug_mode == -1:
 			print(f"True and False are only accepted, '{args.setdebug}' is invalid")
 			exit(0)
-		print(f"Debug mode is set to {debug_mode}")
 
+	if args.callibrate:
+		print("callibrating")
+		with Keyboard.Listener(on_press=fetch_coords) as listener:
+			try:
+				listener.join()
+			except KeyboardInterrupt:
+				listener.stop()
+				exit(0)
 
+	print(f"Debug mode is set to {debug_mode}")
+	print(f"Delay has been set to {delay}")
 	print("Bot is running...\n")
 	while True:
 		print("to exit, ctrl+c and then right control")
@@ -218,6 +258,7 @@ if __name__ == "__main__":
 
 
 		string = refined_message_to_string()
+
 
 
 		with Keyboard.Listener(on_press=on_press) as listener:

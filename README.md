@@ -5,7 +5,7 @@ The bot works by taking the screenshot of a small portion of the screen where th
 
 The [Tesseract](https://tesseract-ocr.github.io/tessdoc/Downloads.html) OCR should be installed on the system prior to using the program, as it depends on the tesseract OCR engine.
 
-Make sure the Blue Box having the text and the text box to type is close to the bottom of the screen (1cm / 39 pixels preferrably).
+Make sure that the starting border of the leaderboard table under the typing box is 1cm / 39 pixels from the bottom of the screen. 
 
 There are two phases:
 - To grab the screenshot.
@@ -20,7 +20,7 @@ The program also takes optional arguments. Do `python autotyper.py -h` to see th
 ## Required modules
 
 ```bash
-python -m pip install -r requriements.txt
+python -m pip install -r requirements.txt
 ```
 
 ## License
