@@ -8,9 +8,9 @@
 #	converts it into text using Computer Vision and tesseract 
 # 	engine. 
 #	
-#	Make sure the Blue Box having the text and the text box 
-#	to type is close to the bottom of the screen 
-#	(1cm / 39 pixels preferrably).
+#	Make sure that the starting border of the leaderboard table 
+#	under the typing box is 1cm / 39 pixels from the bottom of 
+#	the screen.
 #	
 ###############################################################
 #
@@ -52,7 +52,7 @@ x2 = 1449
 y2 = 789
 
 # Command line argument options
-description = "A bot that automates inputs for typeracer.com"
+description = "A bot that automates inputs for typeracer.com. Uses the OCR Engine to convert text in the image to text."
 
 
 # Sends keyboard inputs
@@ -95,7 +95,9 @@ def screenshawn():
 	im=ImageGrab.grab(bbox=(x1, y1, x2, y2))
 
 	# Saving cropped image to file
-	im.save('sample.png')
+	if not os.path.isdir('assets/'):
+		os.mkdir('assets/')
+	im.save('assets/sample.png')
 
 
 # Converting sample.png to text by using computer vision and tesseract OCR engine
@@ -103,7 +105,7 @@ def refined_message_to_string():
 	pytesseract.pytesseract.tesseract_cmd = r"C:\Program Files\Tesseract-OCR\tesseract.exe"
 
 
-	img = cv2.imread('sample.png')
+	img = cv2.imread('assets/sample.png')
 	 
 	gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
 	 
@@ -130,7 +132,10 @@ def refined_message_to_string():
 	     
 		# Open a clean file
 		if debug_mode:
-			with open("recognized.txt", "w") as file:
+			if not os.path.isdir('assets/'):
+				os.mkdir('assets')
+
+			with open("assets/recognized.txt", "w") as file:
 				file.write("")
 	     
 		# Apply OCR on the cropped image
@@ -144,7 +149,7 @@ def refined_message_to_string():
 		# Appending the text into file
 		
 		if debug_mode:
-			with open("recognized.txt", "a") as file_handle:
+			with open("assets/recognized.txt", "a") as file_handle:
 				file_handle.write(text)
 
 		yield text
@@ -174,11 +179,6 @@ def fetch_coords(key):
 			return False
 
 def callibrate():
-	# with MouseListener(on_click=fetch_coords) as listener:
-	# 	try:
-	# 		listener.join()
-	# 	except KeyboardInterrupt:
-	# 		listener.stop()
 
 	with Keyboard.Listener(on_click=fetch_coords) as listener:
 		try:
@@ -193,14 +193,6 @@ def stats():
 	print(f"1) Number of iterations: {iterations_count}")
 	print(f"2) Total number of characters typed: {char_count}")
 
-def debug_setter(string):
-	if string.lower() == "true":
-		return True
-	elif string.lower() == "false":
-		return False
-	else:
-		return -1
-
 
 
 
@@ -211,7 +203,7 @@ if __name__ == "__main__":
 	# Initialize parser
 	parser = argparse.ArgumentParser(description = description)
 	parser.add_argument('-d', '--delay', help = "Changes the delay per character (default = 0.01)")
-	parser.add_argument('-s', '--setdebug', help = "Toggles debug mode, outputs the cropped image and converted code to file (default False)")
+	parser.add_argument('-s', '--setdebug',action="store_true", help = "Toggles debug mode, outputs the cropped image and converted code to file (default False)")
 	parser.add_argument('-c', '--callibrate', help = "Callibrates screenshot coordinates")
 	args = parser.parse_args()
 
@@ -223,10 +215,7 @@ if __name__ == "__main__":
 			exit(0)
 
 	if args.setdebug:
-		debug_mode = debug_setter(args.setdebug)
-		if debug_mode == -1:
-			print(f"True and False are only accepted, '{args.setdebug}' is invalid")
-			exit(0)
+		debug_mode = args.setdebug
 
 	if args.callibrate:
 		print("callibrating")
@@ -273,6 +262,6 @@ if __name__ == "__main__":
 		typer(string)
 		print("Done\n")
 		if not debug_mode:
-			os.remove('sample.png')
+			os.remove('assets/sample.png')
 		iterations_count += 1
 
